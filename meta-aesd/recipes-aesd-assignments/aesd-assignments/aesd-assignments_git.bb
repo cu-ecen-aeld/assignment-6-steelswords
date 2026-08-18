@@ -6,7 +6,7 @@ SRC_URI = "git://git@github.com/cu-ecen-aeld/assignments-3-and-later-steelswords
 #SRC_URI = "git:///file:///home/tristan/classes/yocto/aesd-assignment-3.git;protocol=file;branch=main"
 
 PV = "1.0+git${SRCPV}"
-SRCREV = "883384186bf8374e5df5c100badbccfa6641c309"
+SRCREV = "6bef70ec2629b96083e9b8c67e9fbf15b1fc5735"
 
 # This sets your staging directory based on WORKDIR, where WORKDIR is defined at 
 # https://docs.yoctoproject.org/ref-manual/variables.html?highlight=workdir#term-WORKDIR
@@ -23,8 +23,11 @@ do_configure () {
 	:
 }
 
+EXTRA_OEMAKE += " 'CC=${CC}' 'CXX=${CXX}' 'LINKER=${CC}'"
 do_compile () {
-	oe_runmake
+        oe_runmake clean
+	#oe_runmake CROSS_COMPILE="${CROSS_COMPILE}"
+        oe_runmake
 }
 
 do_install () {
@@ -36,7 +39,7 @@ do_install () {
 	# https://docs.yoctoproject.org/ref-manual/variables.html?highlight=workdir#term-S
 	# See example at https://github.com/cu-ecen-aeld/ecen5013-yocto/blob/ecen5013-hello-world/meta-ecen5013/recipes-ecen5013/ecen5013-hello-world/ecen5013-hello-world_git.bb
         install -d "${D}/${bindir}"
-        install -d "${D}/etc/init.d"
+        install -d "${D}/etc/rcS.d"
         install -m 755 "${S}/aesdsocket" "${D}/${bindir}"
-        install -m 755 "${S}/aesdsocket-start-stop" "${D}/etc/init.d/S20-aesdsocket-start-stop"
+        install -m 755 "${S}/aesdsocket-start-stop" "${D}/etc/rcS.d/S20-aesdsocket-start-stop"
 }

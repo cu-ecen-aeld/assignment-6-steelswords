@@ -1,0 +1,24 @@
+From b56b3379cae1a752414b87b0e7e884dbc0bba114 Mon Sep 17 00:00:00 2001
+From: Tristan Andrus <tristan@tristanandrus.com>
+Date: Tue, 1 Sep 2026 08:52:18 -0600
+Subject: [PATCH] Only build scull and misc-modules
+
+---
+ Makefile | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 7b08c49..213599b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,8 +1,6 @@
+ 
+-SUBDIRS =  misc-progs misc-modules \
+-           skull scull scullc scullp lddbus sculld scullv shortprint simple tty \
+-	   pci usb\
+-	   sbull snull short
++SUBDIRS =  misc-modules \
++			scull
+ 
+ all: subdirs
+ 

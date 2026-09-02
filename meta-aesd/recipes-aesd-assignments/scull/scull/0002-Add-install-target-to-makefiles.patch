@@ -1,0 +1,52 @@
+From cc949d3ceb28aa1dcf765764e323fdc6091276c0 Mon Sep 17 00:00:00 2001
+From: Tristan Andrus <tristan@tristanandrus.com>
+Date: Tue, 1 Sep 2026 09:16:11 -0600
+Subject: [PATCH] Add install target to makefiles
+
+---
+ Makefile              | 3 +++
+ misc-modules/Makefile | 3 +++
+ scull/Makefile        | 4 ++++
+ 3 files changed, 10 insertions(+)
+
+diff --git a/Makefile b/Makefile
+index 213599b..9743f83 100644
+--- a/Makefile
++++ b/Makefile
+@@ -9,3 +9,6 @@ subdirs:
+ 
+ clean:
+ 	for n in $(SUBDIRS); do $(MAKE) -C $$n clean; done
++
++install:
++	for n in $(SUBDIRS); do $(MAKE) -C $$n install; done
+diff --git a/misc-modules/Makefile b/misc-modules/Makefile
+index f4e6e34..a1405d4 100644
+--- a/misc-modules/Makefile
++++ b/misc-modules/Makefile
+@@ -22,6 +22,9 @@ modules:
+ modules_install:
+ 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules_install
+ 
++.PHONY: install
++install: modules_install
++
+ clean:
+ 	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions *.mod modules.order *.symvers
+ 
+diff --git a/scull/Makefile b/scull/Makefile
+index 3f6c8d0..3bec19a 100644
+--- a/scull/Makefile
++++ b/scull/Makefile
+@@ -31,7 +31,11 @@ modules:
+ 
+ endif
+ 
++modules_install:
++	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules_install
+ 
++.PHONY: install
++install: modules_install
+ 
+ clean:
+ 	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions *.mod modules.order *.symvers

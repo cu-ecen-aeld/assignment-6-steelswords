@@ -1,0 +1,30 @@
+From 16236602f00ce814127a4458421b28d3045b9cdb Mon Sep 17 00:00:00 2001
+From: Tristan Andrus <tristan@tristanandrus.com>
+Date: Tue, 1 Sep 2026 16:39:02 -0600
+Subject: [PATCH] Tweak Makefile
+
+---
+ Makefile | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 9743f83..459c64d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -4,11 +4,14 @@ SUBDIRS =  misc-modules \
+ 
+ all: subdirs
+ 
++.PHONY: subdirs
+ subdirs:
+ 	for n in $(SUBDIRS); do $(MAKE) -C $$n || exit 1; done
+ 
++.PHONY: clean
+ clean:
+ 	for n in $(SUBDIRS); do $(MAKE) -C $$n clean; done
+ 
+-install:
+-	for n in $(SUBDIRS); do $(MAKE) -C $$n install; done
++.PHONY: modules_install
++modules_install: subdirs
++	for n in $(SUBDIRS); do $(MAKE) -C $$n module_install; done

@@ -31,12 +31,10 @@ KERNELDIR = "${STAGING_KERNEL_DIR}"
 EXTRA_OEMAKE += "KERNELDIR=${STAGING_KERNEL_DIR}"
 
 do_compile() {
-    oe_runmake -C "${S}/scull"
     oe_runmake -C "${S}/misc-modules"
 }
 
 do_install() {
-    oe_runmake -C "${S}/scull" modules_install INSTALL_MOD_PATH="${D}"
     oe_runmake -C "${S}/misc-modules" modules_install INSTALL_MOD_PATH="${D}"
 }
 
@@ -45,4 +43,7 @@ do_install() {
 #    run_oemake -C "${S}/scull" install
 #    run_oemake -C "${S}/misc-modules" install
 #}
-RPROVIDES:${PN} += "kernel-module-scull"
+RPROVIDES:${PN} += "kernel-module-hello kernel-module-faulty"
+
+# Make any image that includes this fail if we can't build it.
+MACHINE_EXTRA_RDEPENDS += "kernel-module-hello kernel-module-faulty"

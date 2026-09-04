@@ -15,6 +15,7 @@ SRC_URI = "git://git@github.com/cu-ecen-aeld/assignment-7-steelswords.git;protoc
            file://0001-Only-build-scull-and-misc-modules.patch \
            file://0002-Add-install-target-to-makefiles.patch \
            file://0003-Tweak-Makefile.patch \
+           file://S98lddmodules \
            "
 
 # Modify these as desired
@@ -24,6 +25,7 @@ SRCREV = "ff8532b950b40e7f6545414272fcdf64d641ad8f"
 S = "${WORKDIR}/git"
 
 inherit module
+
 
 #MODULES_INSTALL_TARGET = "install"
 #EXTRA_OEMAKE += "KERNELDIR=${STAGING_KERNEL_DIR} M=${S}/scull"
@@ -36,14 +38,20 @@ do_compile() {
 
 do_install() {
     oe_runmake -C "${S}/scull" modules_install INSTALL_MOD_PATH="${D}"
+    install -d "${D}/etc/rcS.d"
+    install -m 755 "${WORKDIR}/S98lddmodules" "${D}/etc/rcS.d" 
 }
+
+# This allows us to install the init script file. The module bbclass clears the FILES variable,
+# which declares what files the package provides
+FILES:${PN} += "${sysconfdir}/rcS.d/S98lddmodules"
 
 #do_install() {
 #    EXTRA_OEMAKE += " -C ${STAGING_KERNEL_DIR} M=${S}/scull"
 #    run_oemake -C "${S}/scull" install
 #    run_oemake -C "${S}/misc-modules" install
 #}
-RPROVIDES:${PN} += "kernel-module-scull"
+#RPROVIDES:${PN} += "kernel-module-scull"
 
 # Make any image that includes this fail if we can't build it.
 MACHINE_EXTRA_RDEPENDS += "kernel-module-scull"

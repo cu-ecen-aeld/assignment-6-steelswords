@@ -43,7 +43,7 @@ do_install() {
 #    run_oemake -C "${S}/scull" install
 #    run_oemake -C "${S}/misc-modules" install
 #}
-RPROVIDES:${PN} += "kernel-module-hello kernel-module-faulty"
+#RPROVIDES:${PN} += "kernel-module-hello kernel-module-faulty"
 
 # Make any image that includes this fail if we can't build it.
-MACHINE_EXTRA_RDEPENDS += "kernel-module-hello kernel-module-faulty"
+#MACHINE_EXTRA_RDEPENDS += "kernel-module-hello kernel-module-faulty"

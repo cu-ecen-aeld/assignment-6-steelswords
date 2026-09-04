@@ -1,0 +1,172 @@
+#!/bin/sh
+# Handles setup and takedown of the scull and faulty modules for AESD assignment
+# 7 part 2.
+
+get_superuser_group() {
+    # Look for wheel, sudo, or staff groups
+    for g in wheel sudo staff root; do
+        if grep -q "$g" /etc/group; then
+            echo "$g"
+            return 0
+        fi
+    done
+    echo "Could not determine superuser group name. Quitting" >&2
+    exit 3
+}
+
+SU_GROUP=$(get_superuser_group)
+
+load_generic_module() {
+    module="$1"
+    device="$1"
+    # Subsequent arguments are passed in as module parameters
+    shift
+    mode=644
+
+
+    echo "-> Loading the $module module, exit on failure"
+    if ! insmod "/lib/modules/5.15.201-yocto-standard/extra/${module}.ko"; then
+        echo "ERROR: Could not load module." >&2
+        exit 4
+    fi
+
+    echo "Get the major number (allocated with allocate_chrdev_region) from /proc/devices"
+    major=$(awk "\$2==\"$module\" {print \$1}" /proc/devices)
+    if [ ! -z ${major} ]; then
+        echo "-> Removing any existing /dev node for /dev/${device}"
+        rm -f "/dev/${device}"
+
+        echo "-> Adding a node for our device at /dev/${device} using mknod"
+        mknod "/dev/${device}" c "$major" 0
+
+        echo "-> Changing group owner to ${SU_GROUP}"
+        chgrp "$SU_GROUP" "/dev/${device}"
+
+        echo "Change access mode to ${mode}"
+        chmod "$mode"  "/dev/${device}"
+    else
+        echo "No device found in /proc/devices for driver ${module} (this driver may not allocate a device)"
+    fi
+}
+
+load_scull_module() {
+    module="scull"
+    device="scull"
+    # Subsequent arguments are passed in as module parameters
+    shift
+    mode=644
+
+    modprobe scull
+
+    # Get device major number for devices with this module
+    major=$(awk "\$2==\"$module\" {print \$1}" /proc/devices)
+
+
+    echo "-> Removing any existing devices associated with scull"
+    rm -f /dev/${device}[0-3] &> /dev/null ||:
+    mknod /dev/${device}0 c $major 0
+    mknod /dev/${device}1 c $major 1
+    mknod /dev/${device}2 c $major 2
+    mknod /dev/${device}3 c $major 3
+    ln -sf ${device}0 /dev/${device}
+    chgrp "$SU_GROUP" /dev/${device}[0-3] 
+    chmod $mode  /dev/${device}[0-3]
+
+    rm -f /dev/${device}pipe[0-3]
+    mknod /dev/${device}pipe0 c $major 4
+    mknod /dev/${device}pipe1 c $major 5
+    mknod /dev/${device}pipe2 c $major 6
+    mknod /dev/${device}pipe3 c $major 7
+    ln -sf ${device}pipe0 /dev/${device}pipe
+    chgrp "$SU_GROUP" /dev/${device}pipe[0-3] 
+    chmod $mode  /dev/${device}pipe[0-3]
+
+    rm -f /dev/${device}single
+    mknod /dev/${device}single  c $major 8
+    chgrp "$SU_GROUP" /dev/${device}single
+    chmod $mode  /dev/${device}single
+
+    rm -f /dev/${device}uid
+    mknod /dev/${device}uid   c $major 9
+    chgrp "$SU_GROUP" /dev/${device}uid
+    chmod $mode  /dev/${device}uid
+
+    rm -f /dev/${device}wuid
+    mknod /dev/${device}wuid  c $major 10
+    chgrp "$SU_GROUP" /dev/${device}wuid
+    chmod $mode  /dev/${device}wuid
+
+    rm -f /dev/${device}priv
+    mknod /dev/${device}priv  c $major 11
+    chgrp "$SU_GROUP" /dev/${device}priv
+    chmod $mode  /dev/${device}priv
+}
+
+unload_scull_module() {
+
+    module="scull"
+    device="scull"
+
+    echo "-> Removing the $module module"
+    # invoke rmmod with all arguments we got
+    rmmod $module $* || exit 1
+
+    # Remove stale nodes
+
+    echo "-> Removing scull device nodes"
+    rm -f /dev/${device} /dev/${device}[0-3] 
+    rm -f /dev/${device}priv
+    rm -f /dev/${device}pipe /dev/${device}pipe[0-3]
+    rm -f /dev/${device}single
+    rm -f /dev/${device}uid
+    rm -f /dev/${device}wuid
+}
+
+unload_generic_module() {
+    module=$1
+    device=$1
+
+    if [ $# -ne 1 ]; then
+        echo "Wrong number of arguments"
+        echo "usage: $0 module_name"
+        echo "Will unload the module specified by module_name and remove associated device"
+        exit 1
+    fi
+
+    # invoke rmmod with all arguments we got
+    rmmod $module || exit 1
+
+    # Remove stale nodes
+    rm -f /dev/${device} ||:
+}
+
+print_usage() {
+    echo "Usage: S981lddmodules <start|stop|status>"
+}
+
+# Check for argument
+if [ $# -ne 1 ]; then
+    print_usage
+    exit 1
+fi
+
+# Parse arguments
+case "$1" in 
+    start)
+        load_scull_module
+        load_generic_module faulty
+        load_generic_module hello
+        ;;
+    stop)
+        unload_generic_module hello
+        unload_generic_module faulty
+        unload_scull_module
+        ;;
+    status)
+        print_status
+        ;;
+    *)
+        echo "ERROR: Unknown argument."
+        print_usage
+        exit 2
+esac
